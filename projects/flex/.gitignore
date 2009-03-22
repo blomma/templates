@@ -1,0 +1,14 @@
+build.info
+AppVersion.as
+._*
+bin-debug
+.DS_Store
+bin
+.actionScriptProperties
+.flexProperties
+.project
+.settings
+bin-deploy
+*.cache
+src/generated
+*.tmproj

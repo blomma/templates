@@ -1,0 +1,14 @@
+package version
+{
+	public class AppVersion
+	{
+		public static const BUILD_TIME		: String = "%BUILDTIME%";
+
+		public static function log() : void
+		{
+			trace( "----------------------------------------------------" );
+			trace( "- BUILD TIME:               [" + BUILD_TIME + "]" );
+			trace( "----------------------------------------------------" );
+		}
+	}
+}

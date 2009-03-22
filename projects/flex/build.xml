@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<project name="Flex Ant File Compiler" default="masterbuild" basedir=".">
+	<!-- Load Environment specific properties from properties file -->
+	<property file="build.properties"/>
+	<!-- Load the flex tasks for compiling the actionScript code and running flexUnit -->
+	<taskdef resource="flexTasks.tasks" classpath="${FLEX.TASK.DIR}"/>
+	<target name="setbuildinfo">
+		<!-- Copy the template file and replace %BUILDTIME% -->
+		<copy file="src/version/AppVersion.as.tmpl" tofile="src/version/AppVersion.as" overwrite="true"/>
+		<tstamp>
+			<format property="build.time" pattern="yyyy-MM-dd HH.mm.ss"/>
+		</tstamp>
+		<replace file="src/version/AppVersion.as" token="%BUILDTIME%" value="${build.time}"/>
+	</target>
+	<!-- Setup build directories -->
+	<target name="setupdir" description="Sets up the directories needed for a proper build">
+		<mkdir dir="${bin-debug.dir}"/>
+		<mkdir dir="${bin-deploy.dir}"/>
+	</target>
+	<!-- Init with echoing some info to the console -->
+	<target name="init" depends="setbuildinfo" description="Initializes the build">
+		<property file="build.info"/>
+		<tstamp/>
+		<echo message="============================================="/>
+		<echo message="${project.name}"/>
+		<echo message="${project.version}-${build.time}"/>
+		<echo message="OS : ${os.name}"/>
+		<echo message="Author: ${project.author}"/>
+		<echo message="=============================================="/>
+	</target>
+	<!-- Compile debug application -->
+	<target name="compile-debug" depends="init,setupdir" description="Compiles the mxml/as source files for debugging">
+		<mxmlc file="${main.class}" output="${swf-debug.export}" actionscript-file-encoding="${ENCODING}" keep-generated-actionscript="false" incremental="true" use-network="false" debug="true" strict="true" fork="false" locale="${LOCALE}">
+			<define name="CONFIG::debug" value="true"/>
+			<define name="CONFIG::release" value="false"/>
+			<load-config filename="${FLEX_HOME}/frameworks/flex-config.xml"/>
+			<source-path path-element="${FLEX_HOME}/frameworks"/>
+			<source-path path-element="${src.dir}"/>
+			<source-path path-element="${locale.dir}"/>
+			<include-libraries dir="${basedir}" append="true">
+				<include name="${lib.dir}"/>
+			</include-libraries>
+		</mxmlc>
+	</target>
+	<!-- Compile deploy application -->
+	<target name="compile-deploy" depends="init,setupdir" description="Compiles the mxml/as source files for deployment">
+		<mxmlc file="${main.class}" output="${swf-deploy.export}" actionscript-file-encoding="${ENCODING}" optimize="true" keep-generated-actionscript="false" strict="true" incremental="false">
+			<define name="CONFIG::debug" value="false"/>
+			<define name="CONFIG::release" value="true"/>
+			<load-config filename="${FLEX_HOME}/frameworks/flex-config.xml"/>
+			<source-path path-element="${FLEX_HOME}/frameworks"/>
+			<source-path path-element="${src.dir}"/>
+			<source-path path-element="${locale.dir}"/>
+			<include-libraries dir="${basedir}" append="true">
+				<include name="${lib.dir}"/>
+			</include-libraries>
+		</mxmlc>
+	</target>
+	<!-- Clean output dirs -->
+	<target name="clean" depends="setupdir" description="clean all generated files">
+		<delete verbose="true" dir="${src.dir}/generated"/>
+		<delete verbose="true" dir="${bin-debug.dir}/js"/>
+		<delete verbose="true">
+			<fileset dir="${bin-debug.dir}" includes="expressInstall.swf" defaultexcludes="false"/>
+			<fileset dir="${bin-deploy.dir}" includes="${swf.file}" defaultexcludes="false"/>
+			<fileset dir="${bin-debug.dir}" includes="${swf.file}" defaultexcludes="false"/>
+			<fileset dir="${bin-debug.dir}" includes="*.html" defaultexcludes="false"/>
+			<fileset dir="${bin-debug.dir}" includes="*.css" defaultexcludes="false"/>
+			<fileset dir="${bin-debug.dir}" includes="*.js" defaultexcludes="false"/>
+			<fileset dir="${src.dir}" includes="*.cache" defaultexcludes="false"/>
+		</delete>
+	</target>
+	<!-- Create HTML wrapper -->
+	<target name="wrapper-debug">
+		<!-- Copy the html-wrapper dir except the index.template.html -->
+		<copy todir="${bin-debug.dir}">
+			<fileset dir="${html-template.dir}">
+				<exclude name="**/index.template.html"/>
+			</fileset>
+		</copy>
+		<!-- Copy and rename the index.template.html -->
+		<copy file="${html-template.dir}/index.template.html" tofile="${bin-debug.dir}/${html-template.file}"/>
+		<!-- Replace placeholders in the html with our variables -->
+		<replaceregexp file="${bin-debug.dir}/${html-template.file}" flags="gs" match="\$\{project_name\}" replace="${project.name}"/>
+		<replaceregexp file="${bin-debug.dir}/${html-template.file}" flags="gs" match="\$\{swf_file\}" replace="${swf.file}"/>
+	</target>
+	<!-- Run all, default -->
+	<target name="masterbuild" depends="compile-debug, wrapper-debug" description="Complete build in efficient sequence"/>
+</project>
